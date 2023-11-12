@@ -48,8 +48,8 @@ async def process_message(message):
             if(message.value.decode('utf-8') == 'EOFBREAK'):
                 consumer_Test_Conf.close()
             ms = json.loads(message.value.decode('utf-8'))
+            print(ms['test_id'])
             await send_requests_with_delay('https://www.google.com', 8, int(ms['test_message_delay']), ms['test_id'])
-            print(ms['test_type'])
         else:
             print("Received message with None value.")
     except Exception as e:

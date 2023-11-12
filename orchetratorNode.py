@@ -5,7 +5,6 @@ import hashlib
 import random
 from datetime import datetime
 import json
-
 def uniqueId():
     unique_identifier = random.randint(1, 10000)
     timestamp = datetime.now().strftime('%Y%m%d%H%M%S%f') 
@@ -42,6 +41,7 @@ async def process_metric_message(message):
             if node_id not in metric_result:
                 metric_result[node_id] = {}
             metric_result[node_id][test_id] = metrics
+            print({'node_id':node_id,'metrics':metrics,'test_id':test_id})
         else:
             print("Received empty or non-JSON message.")
     except json.JSONDecodeError as e:
@@ -49,7 +49,7 @@ async def process_metric_message(message):
     except Exception as e:
         print(f"Error processing message: {e}")
 
-async def consume_messages_resigter(type_consumer,numberOfDriver,typeOfTopic):
+async def consume_messages_resigter(type_consumer,numberOfDriver,typeOfTopic,noTests):
     inde = 0
     if(typeOfTopic == 'register'):
         for message in type_consumer:
@@ -59,27 +59,32 @@ async def consume_messages_resigter(type_consumer,numberOfDriver,typeOfTopic):
                 type_consumer.close()
                 break
     elif(typeOfTopic == 'metrics'):
+        coun = 0
+        print(noTests)
         for message in type_consumer:
             await process_metric_message(message)
-            inde += 1
-            if inde >= int(numberOfDriver):
+            coun += 1
+            if coun >= (int(noTests)*  int(numberOfDriver)):
                 type_consumer.close()
                 break
 # async def consume_messages_meteric():
 async def main():
+    numberOfTests = 0
     numberOfDriverNodes = input('Enter the number of Drivers:')
-    await consume_messages_resigter(consumer_Register, numberOfDriverNodes, 'register')
+    await consume_messages_resigter(consumer_Register, numberOfDriverNodes, 'register',numberOfTests)
     while True:
         cmdInput = input("Enter a command (1 to send a message, exit to quit): ")
         if cmdInput == "1":
             producer.send('test_config', json.dumps({"test_id":uniqueId(),"test_type": "AVALANCHE","test_message_delay": "0"}).encode('utf-8'))
-            await consume_messages_resigter(consumer_metrics, numberOfDriverNodes, 'metrics')
+            numberOfTests+=1
         if cmdInput == "2":
             producer.send('test_config', json.dumps({"test_id":uniqueId(),"test_type": "TSUNAMI","test_message_delay": "10"}).encode('utf-8'))
-            await consume_messages_resigter(consumer_metrics, numberOfDriverNodes, 'metrics')
+            numberOfTests+=1
+            
         elif cmdInput.lower() == "exit":
             producer.send('test_config', b'EOFBREAK')
             break
+    await consume_messages_resigter(consumer_metrics, numberOfDriverNodes, 'metrics',numberOfTests)
 
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
