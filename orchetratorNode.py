@@ -13,7 +13,7 @@ def uniqueId():
     return unique_hash
 
 consumer_Register = KafkaConsumer('register', group_id='Register')
-consumer_metrics = KafkaConsumer('metrics', group_id='metrics')
+consumer_metrics = KafkaConsumer('metrics', group_id='metrics',consumer_timeout_ms=5000)
 producer = KafkaProducer(bootstrap_servers=['localhost:9092'])
 rejisterd_DriverNodes = {}
 metric_result = {}
@@ -74,13 +74,17 @@ async def main():
     await consume_messages_resigter(consumer_Register, numberOfDriverNodes, 'register',numberOfTests)
     while True:
         cmdInput = input("Enter a command (1 to send a message, exit to quit): ")
+        test_id = uniqueId()
         if cmdInput == "1":
-            producer.send('test_config', json.dumps({"test_id":uniqueId(),"test_type": "AVALANCHE","test_message_delay": "0"}).encode('utf-8'))
+            producer.send('test_config', json.dumps({"test_id":test_id,"test_type": "AVALANCHE","test_message_delay": "0"}).encode('utf-8'))
             numberOfTests+=1
         if cmdInput == "2":
-            producer.send('test_config', json.dumps({"test_id":uniqueId(),"test_type": "TSUNAMI","test_message_delay": "10"}).encode('utf-8'))
+            producer.send('test_config', json.dumps({"test_id":test_id,"test_type": "TSUNAMI","test_message_delay": "10"}).encode('utf-8'))
             numberOfTests+=1
-            
+        if cmdInput == "3":
+            print('in trigger')
+            producer.send('trigger',json.dumps({"test_id":test_id,"trigger": "YES"}).encode('utf-8'))
+            producer.send('trigger',b'EOFBREAK')
         elif cmdInput.lower() == "exit":
             producer.send('test_config', b'EOFBREAK')
             break

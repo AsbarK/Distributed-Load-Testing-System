@@ -56,13 +56,32 @@ async def process_message(message):
         print(f"Error processing message: {e}")
 
 async def consume_messages(consumer_Test_Conf):
+    isTrigger = 0
     try:
         for message in consumer_Test_Conf:
-            await process_message(message)
+            try:
+                print("in trigger 0")
+                for msgs in consumer_trigger:
+                    print("in trigger")
+                    msg_val = msgs.value.decode('utf-8')
+                    if(msg_val == 'EOFBREAK'):
+                        consumer_trigger.close()
+                        break
+                    msg_value = json.loads(msg_val)
+                    if msg_value["trigger"] == "YES":
+                        print('yes')
+                        isTrigger = 1
+                    print(f"Received message: {msg_value}")
+            except KeyboardInterrupt:
+                print('ex')
+                pass
+            if isTrigger:
+                await process_message(message)
     except Exception as e:
         print(f"Error consuming messages: {e}")
 
-consumer_Test_Conf = KafkaConsumer('test_config', group_id=f'{unique_hash}', bootstrap_servers=[kafkaIp])
+consumer_Test_Conf = KafkaConsumer('test_config', group_id=f'{unique_hash}test', bootstrap_servers=[kafkaIp])
+consumer_trigger = KafkaConsumer('trigger',group_id=f'{unique_hash}trigger', bootstrap_servers=[kafkaIp])
 producer = KafkaProducer(bootstrap_servers=[kafkaIp])
 
 async def main():
