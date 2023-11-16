@@ -72,22 +72,18 @@ async def main():
     numberOfTests = 0
     numberOfDriverNodes = input('Enter the number of Drivers:')
     await consume_messages_resigter(consumer_Register, numberOfDriverNodes, 'register',numberOfTests)
-    while True:
-        cmdInput = input("Enter a command (1 to send a message, exit to quit): ")
-        test_id = uniqueId()
-        if cmdInput == "1":
-            producer.send('test_config', json.dumps({"test_id":test_id,"test_type": "AVALANCHE","test_message_delay": "0"}).encode('utf-8'))
-            numberOfTests+=1
-        if cmdInput == "2":
-            producer.send('test_config', json.dumps({"test_id":test_id,"test_type": "TSUNAMI","test_message_delay": "10"}).encode('utf-8'))
-            numberOfTests+=1
-        if cmdInput == "3":
-            print('in trigger')
-            producer.send('trigger',json.dumps({"test_id":test_id,"trigger": "YES"}).encode('utf-8'))
-            producer.send('trigger',b'EOFBREAK')
-        elif cmdInput.lower() == "exit":
-            producer.send('test_config', b'EOFBREAK')
-            break
+    cmdInput = input("Enter a command (1 to send a message, exit to quit): ")
+    test_id = uniqueId()
+    if cmdInput == "1":
+        producer.send('test_config', json.dumps({"test_id":test_id,"test_type": "AVALANCHE","test_message_delay": "0"}).encode('utf-8'))
+        numberOfTests+=1
+    if cmdInput == "2":
+        producer.send('test_config', json.dumps({"test_id":test_id,"test_type": "TSUNAMI","test_message_delay": "10"}).encode('utf-8'))
+        numberOfTests+=1
+    if cmdInput == "3":
+        print('in trigger')
+        producer.send('trigger',json.dumps({"test_id":test_id,"trigger": "YES"}).encode('utf-8'))
+        producer.send('trigger',b'EOFBREAK')
     await consume_messages_resigter(consumer_metrics, numberOfDriverNodes, 'metrics',numberOfTests)
 
 if __name__ == '__main__':

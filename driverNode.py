@@ -9,6 +9,7 @@ import json
 import requests
 import time
 import statistics
+import schedule
 
 kafkaIp,orchsIp = sys.argv[1:]
 def uniqueHash():
@@ -19,29 +20,40 @@ def uniqueHash():
     return unique_hash
 unique_hash = uniqueHash()
 
-def send_requests_with_delay(url, num_requests, delay_interval_seconds,test_id):
-    response_times = []
-    
-    for i in range(num_requests):
-        start_time = time.time()
-        response = requests.get(url)
-        end_time = time.time()
-        
-        response_time = end_time - start_time
-        response_times.append(response_time)
-        
-        print(f"Request {i + 1} Status Code: {response.status_code}, Response Time: {response_time:.2f} seconds")
-        time.sleep(delay_interval_seconds) 
 
-    mean_response_time = statistics.mean(response_times)
-    median_response_time = statistics.median(response_times)
-    min_response_time = min(response_times)
-    max_response_time = max(response_times)
-    # print(f"Mean Response Time: {mean_response_time:.2f} seconds")
-    # print(f"Median Response Time: {median_response_time:.2f} seconds")
-    # print(f"Minimum Response Time: {min_response_time:.2f} seconds")
-    # print(f"Maximum Response Time: {max_response_time:.2f} seconds")
-    producer.send('metrics', json.dumps({"metrics": {"mean_latency": mean_response_time * 1000,"median_latency": median_response_time * 1000,"min_latency": min_response_time * 1000,"max_latency": max_response_time * 1000,},"node_id": unique_hash,"test_id": test_id,"report_id": uniqueHash()}).encode('utf-8'))
+def gather_and_send_metrics(url,test_id):
+    global response_times
+    start_time = time.time()
+    response = requests.get(url)
+    end_time = time.time()
+
+    response_time = end_time - start_time
+    response_times.append(response_time)
+
+    print(f"Request Status Code: {response.status_code}, Response Time: {response_time:.2f} seconds")
+
+    if sum(response_times) >= 0.75:
+        mean_response_time = statistics.mean(response_times)
+        median_response_time = statistics.median(response_times)
+        min_response_time = min(response_times)
+        max_response_time = max(response_times)
+
+        producer.send('metrics', json.dumps({
+            "metrics": {
+                "mean_latency": mean_response_time * 1000,
+                "median_latency": median_response_time * 1000,
+                "min_latency": min_response_time * 1000,
+                "max_latency": max_response_time * 1000,
+            },
+            "node_id": unique_hash,
+            "test_id": test_id,
+            "report_id": uniqueHash()
+        }).encode('utf-8'))
+
+        response_times = []
+
+def send_requests_with_delay(url, delay_interval_seconds,test_id):
+    schedule.every(delay_interval_seconds).seconds.do(gather_and_send_metrics(url,test_id))
 async def process_message(message):
     try:
         if message and message.value:
@@ -49,7 +61,7 @@ async def process_message(message):
                 consumer_Test_Conf.close()
             ms = json.loads(message.value.decode('utf-8'))
             print(ms['test_id'])
-            await send_requests_with_delay('https://www.google.com', 8, int(ms['test_message_delay']), ms['test_id'])
+            await send_requests_with_delay('https://www.google.com', int(ms['test_message_delay']), ms['test_id'])
         else:
             print("Received message with None value.")
     except Exception as e:
@@ -71,7 +83,7 @@ async def consume_messages(consumer_Test_Conf):
                     if msg_value["trigger"] == "YES":
                         print('yes')
                         isTrigger = 1
-                    print(f"Received message: {msg_value}")
+                    # print(f"Received message: {msg_value}")
             except KeyboardInterrupt:
                 print('ex')
                 pass
