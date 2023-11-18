@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import time
 from kafka import KafkaConsumer,KafkaProducer
 import asyncio
 import hashlib
@@ -13,7 +14,7 @@ def uniqueId():
     return unique_hash
 
 consumer_Register = KafkaConsumer('register', group_id='Register')
-consumer_metrics = KafkaConsumer('metrics', group_id='metrics',consumer_timeout_ms=5000)
+consumer_metrics = KafkaConsumer('metrics', group_id='metrics')
 producer = KafkaProducer(bootstrap_servers=['localhost:9092'])
 rejisterd_DriverNodes = {}
 metric_result = {}
@@ -63,31 +64,26 @@ async def consume_messages_resigter(type_consumer,numberOfDriver,typeOfTopic,noT
         print(noTests)
         for message in type_consumer:
             await process_metric_message(message)
-            coun += 1
-            if coun >= (int(noTests)*  int(numberOfDriver)):
-                type_consumer.close()
-                break
+            # coun += 1
+            # if coun >= (int(noTests)*  int(numberOfDriver)):
+            #     type_consumer.close()
+            #     break
 # async def consume_messages_meteric():
 async def main():
     numberOfTests = 0
     numberOfDriverNodes = input('Enter the number of Drivers:')
     await consume_messages_resigter(consumer_Register, numberOfDriverNodes, 'register',numberOfTests)
-    while True:
-        cmdInput = input("Enter a command (1 to send a message, exit to quit): ")
-        test_id = uniqueId()
-        if cmdInput == "1":
-            producer.send('test_config', json.dumps({"test_id":test_id,"test_type": "AVALANCHE","test_message_delay": "0"}).encode('utf-8'))
-            numberOfTests+=1
-        if cmdInput == "2":
-            producer.send('test_config', json.dumps({"test_id":test_id,"test_type": "TSUNAMI","test_message_delay": "10"}).encode('utf-8'))
-            numberOfTests+=1
-        if cmdInput == "3":
-            print('in trigger')
-            producer.send('trigger',json.dumps({"test_id":test_id,"trigger": "YES"}).encode('utf-8'))
-            producer.send('trigger',b'EOFBREAK')
-        elif cmdInput.lower() == "exit":
-            producer.send('test_config', b'EOFBREAK')
-            break
+
+    cmdInput = input("Enter a command (1 to send a message, exit to quit): ")
+    test_id = uniqueId()
+    if cmdInput == "1":
+        producer.send('test_config', json.dumps({"test_id":test_id,"test_type": "AVALANCHE","test_message_delay": "0", "message_count_per_driver": "100"}).encode('utf-8'))
+        numberOfTests+=1
+    if cmdInput == "1":
+        print('in trigger')
+        producer.send('trigger',json.dumps({"test_id":test_id,"trigger": "YES"}).encode('utf-8'))
+        producer.send('trigger',b'EOFBREAK')
+    # time.sleep(2)
     await consume_messages_resigter(consumer_metrics, numberOfDriverNodes, 'metrics',numberOfTests)
 
 if __name__ == '__main__':
