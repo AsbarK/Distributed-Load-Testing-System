@@ -46,6 +46,12 @@ def heartbeat():
 def metrics():
     global metric_result,heartBeat
     return render_template('metrics.html', metric_result=metric_result,heartBeat=heartBeat)
+
+@app.route('/get_metrics')
+def get_metrics():
+    global metric_result, heartBeat
+    updated_table_html = render_template('partials/metric_table.html', metric_result=metric_result, heartBeat=heartBeat)
+    return jsonify({'updatedTableHTML': updated_table_html})
 @app.route('/run-orchestration', methods=['POST'])
 def run_orchestration_route():
     num_drivers = int(request.form['num_drivers'])

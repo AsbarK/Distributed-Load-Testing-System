@@ -1,0 +1,24 @@
+<thead>
+    <tr>
+        <th>Node ID</th>
+        <th>Test ID</th>
+        <th>Metrics</th>
+        <th>Heartbeat TimeStamp</th>
+    </tr>
+</thead>
+<tbody>
+    {% for node_id, tests in metric_result.items() %}
+        {% for test_id, metrics in tests.items() %}
+            <tr>
+                <td>{{ node_id }}</td>
+                <td>{{ test_id }}</td>
+                <td>
+                    {% for metric_key, metric_value in metrics.items() %}
+                        {{ metric_key }}: {{ metric_value }}<br>
+                    {% endfor %}
+                </td>
+                <td>{{ heartBeat.get(node_id, {}).get('timestamp', 'N/A') }}</td>
+            </tr>
+        {% endfor %}
+    {% endfor %}
+</tbody>
