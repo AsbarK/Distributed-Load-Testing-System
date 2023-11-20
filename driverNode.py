@@ -110,5 +110,3 @@ if __name__ == '__main__':
     producer = KafkaProducer(bootstrap_servers=[kafkaIp])
     consumer_Test_Conf = KafkaConsumer('test_config', group_id=f'{unique_hash}test', bootstrap_servers=[kafkaIp])
     consumer_trigger = KafkaConsumer('trigger', group_id=f'{unique_hash}trigger', bootstrap_servers=[kafkaIp])
-
-    asyncio.run(main())
