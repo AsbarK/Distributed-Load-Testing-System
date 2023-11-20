@@ -63,6 +63,9 @@ async def process_message(message):
             ms = json.loads(message.value.decode('utf-8'))
             print(ms['test_id'])
             await send_requests_with_delay('https://www.google.com', int(ms['message_count_per_driver']), int(ms['test_message_delay']), ms['test_id'],ms['test_type'])
+            producer.flush()
+            producer.send('metrics',b'EOFBREAK')
+            return
         else:
             print("Received message with None value.")
     except Exception as e:
@@ -90,6 +93,8 @@ async def consume_messages(consumer_Test_Conf):
         for message in consumer_Test_Conf:
             print('pout')
             await process_message(message)
+            consumer_Test_Conf.close()
+            return
     except Exception as e:
         print(f"Error consuming messages: {e}")
 
@@ -99,6 +104,7 @@ async def main():
     producer.send('register', json.dumps({'node_id': unique_hash, 'node_IP': 'IPAddr', 'message_type': 'DRIVER_NODE_REGISTER'}).encode('utf-8'))
     task = asyncio.create_task(consumer_triggerr(consumer_trigger))
     task.add_done_callback(await consume_messages(consumer_Test_Conf))
+    return
 
 if __name__ == '__main__':
     producer = KafkaProducer(bootstrap_servers=[kafkaIp])

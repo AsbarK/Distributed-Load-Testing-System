@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
-import time
+import sys
 from kafka import KafkaConsumer,KafkaProducer
 import asyncio
 import hashlib
 import random
 from datetime import datetime
 import json
+import time
+
+num_drivers, test_type, delay, num_messages = sys.argv[1:]
 def uniqueId():
     unique_identifier = random.randint(1, 10000)
     timestamp = datetime.now().strftime('%Y%m%d%H%M%S%f') 
@@ -60,33 +63,27 @@ async def consume_messages_resigter(type_consumer,numberOfDriver,typeOfTopic,noT
                 type_consumer.close()
                 break
     elif(typeOfTopic == 'metrics'):
-        coun = 0
-        print(noTests)
         for message in type_consumer:
+            if "EOFBREAK" in message.value.decode('utf-8'):
+                type_consumer.close()
+                return
             await process_metric_message(message)
-            # coun += 1
-            # if coun >= (int(noTests)*  int(numberOfDriver)):
-            #     type_consumer.close()
-            #     break
-# async def consume_messages_meteric():
 async def main():
     numberOfTests = 0
-    numberOfDriverNodes = input('Enter the number of Drivers:')
-    await consume_messages_resigter(consumer_Register, numberOfDriverNodes, 'register',numberOfTests)
+    # numberOfDriverNodes = input('Enter the number of Drivers:')
+    await consume_messages_resigter(consumer_Register, num_drivers, 'register',numberOfTests)
 
-    cmdInput = input("Enter a command (1 to send a message, exit to quit): ")
     test_id = uniqueId()
-    if cmdInput == "1":
-        producer.send('test_config', json.dumps({"test_id":test_id,"test_type": "AVALANCHE","test_message_delay": "0", "message_count_per_driver": "100"}).encode('utf-8'))
-        numberOfTests+=1
-    if cmdInput == "1":
-        print('in trigger')
-        producer.send('trigger',json.dumps({"test_id":test_id,"trigger": "YES"}).encode('utf-8'))
-        producer.send('trigger',b'EOFBREAK')
+    producer.send('test_config', json.dumps({"test_id":test_id,"test_type": str(test_type),"test_message_delay": delay, "message_count_per_driver": num_messages}).encode('utf-8'))
+    numberOfTests+=1
+    # print('in trigger')
+    producer.send('trigger',json.dumps({"test_id":test_id,"trigger": "YES"}).encode('utf-8'))
+    producer.send('trigger',b'EOFBREAK')
     # time.sleep(2)
-    await consume_messages_resigter(consumer_metrics, numberOfDriverNodes, 'metrics',numberOfTests)
+    await consume_messages_resigter(consumer_metrics, num_drivers, 'metrics',numberOfTests)
 
 if __name__ == '__main__':
+    time.sleep(2*int(num_drivers))
     loop = asyncio.get_event_loop()
     loop.run_until_complete(main())
     print(rejisterd_DriverNodes,metric_result)
