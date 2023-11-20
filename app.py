@@ -1,5 +1,7 @@
 import os
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, redirect, url_for
+
+
 
 app = Flask(__name__)
 pwd = os.getcwd()
@@ -26,7 +28,6 @@ def update_metrics():
 def metrics():
     global metric_result
     return render_template('metrics.html', metric_result=metric_result)
-
 @app.route('/run-orchestration', methods=['POST'])
 def run_orchestration_route():
     num_drivers = int(request.form['num_drivers'])
@@ -39,6 +40,8 @@ def run_orchestration_route():
     num_messages = int(request.form['num_messages'])
 
     # Run orchestration node
+    
+
     orchestration_command = f"python3 {pwd}/orchetratorNode.py {num_drivers} {test_type} {delay} {num_messages}"
     os.system(f"osascript -e 'tell application \"Terminal\" to do script \"{orchestration_command}\"'")
 
@@ -46,7 +49,8 @@ def run_orchestration_route():
     for i in range(num_drivers):
         run_driver_node(i + 1)
 
-    return "Orchestration and Drivers started successfully!"
+    # Redirect to the 'metrics' endpoint
+    return redirect(url_for('metrics'))
 
 if __name__ == '__main__':
     app.run(debug=True)

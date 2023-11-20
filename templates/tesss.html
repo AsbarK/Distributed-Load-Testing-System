@@ -153,10 +153,25 @@
     }
 
     function continueOrchestration() {
-        var confirmationPopup = document.getElementById('confirmationPopup');
-        confirmationPopup.style.display = 'none';
         document.getElementById('testForm').submit();
-    }
+        setTimeout(function () {
+        window.location.href = 'http://127.0.0.1:5000/metrics';
+    }, 2000); // Adjust the delay as needed
+    return false; // Prevent further actions
+    // var confirmationPopup = document.getElementById('confirmationPopup');
+    // confirmationPopup.style.display = 'none';
+
+    // Submit the form
+    // document.getElementById('testForm').submit();
+
+    // // Redirect to the specified URL after a delay
+    // setTimeout(function () {
+    //     window.location.href = 'http://127.0.0.1:5000/metrics';
+    // }, 2000); // Adjust the delay as needed
+    // return false; // Prevent further actions
+}
+
+
 
     function cancelOrchestration() {
         var confirmationPopup = document.getElementById('confirmationPopup');
