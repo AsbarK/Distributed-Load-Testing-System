@@ -49,7 +49,7 @@
             cursor: pointer;
             border-radius: 20px;
             width: 100px;
-            margin-left: 140px;
+            
            
         }
 
@@ -105,48 +105,70 @@
 </head>
 
 
-
 <body>
-
-
 
 <div class="container">
     <nav class="logo">
         <h2>Distributed Load Testing...</h2>
     </nav>
     <h2>Enter Test Configuration</h2>
-    <form id="testForm" method="post" action="/run-orchestration">
+    <form id="testForm" method="post" action="/run-orchestration" onsubmit="return showConfirmationPopup()">
         <label for="num_drivers">Number of Driver Nodes:</label>
-        <input type="number" name="num_drivers" required><br>
+        <input type="number" name="num_drivers" style="border-radius: 20px;border:none"><br>
     
         <label for="test_type">Test Type:</label>
-        <select name="test_type" required>
-            <option value="TSUNAMI">TSUNAMI</option>
+        <select name="test_type" style="border-radius: 20px;">
             <option value="AVALANCHI">AVALANCHI</option>
+            <option value="TSUNAMI" >TSUNAMI</option>
         </select><br>
     
         <div id="delay_section" style="display:none;">
-            <label for="delay">Delay (only for AVALANCHI):</label>
-            <input type="number" name="delay"><br>
+            <label for="delay" style="border-radius: 20px;border:none">Delay (only for TSUNAMI):</label>
+            <input type="number" style="border-radius: 20px;border:none" name="delay"><br>
         </div>
     
         <label for="num_messages">Number of Messages per Driver Node:</label>
-        <input type="number" name="num_messages" required><br>
+        <input type="number" name="num_messages" style="border-radius: 20px;border:none" required><br>
     
-        <input type="submit" value="Run Orchestration">
+        <input type="submit" value="Run Orchestration" style="border: 2px solid black;background: rgb(51, 189, 51);border-radius: 20px;">
 
-        <!-- <button type="button" onclick="showPopup()">Continue</button> -->
+        <!-- Confirmation Popup -->
+        <div class="popup" id="confirmationPopup">
+            <div class="popup-content">
+                <p>You want to continue?</p>
+                <button type="button" onclick="continueOrchestration()">Continue</button>
+                <button type="button" style="background-color: red;" onclick="cancelOrchestration()">Cancel</button>
+            </div>
+        </div>
+        
     </form>
 </div>
 
 <script>
+    function showConfirmationPopup() {
+        var confirmationPopup = document.getElementById('confirmationPopup');
+        confirmationPopup.style.display = 'flex';
+        return false; // Prevent form submission
+        
+    }
+
+    function continueOrchestration() {
+        var confirmationPopup = document.getElementById('confirmationPopup');
+        confirmationPopup.style.display = 'none';
+        document.getElementById('testForm').submit();
+    }
+
+    function cancelOrchestration() {
+        var confirmationPopup = document.getElementById('confirmationPopup');
+        confirmationPopup.style.display = 'none';
+    }
 
     document.addEventListener('DOMContentLoaded', function () {
         var testTypeSelect = document.querySelector('select[name="test_type"]');
         var delaySection = document.getElementById('delay_section');
 
         testTypeSelect.addEventListener('change', function () {
-            if (testTypeSelect.value === 'AVALANCHI') {
+            if (testTypeSelect.value === 'TSUNAMI') {
                 delaySection.style.display = 'block';
             } else {
                 delaySection.style.display = 'none';

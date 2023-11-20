@@ -34,7 +34,7 @@ async def send_requests_with_delay(url, num_requests, delay_interval_seconds, te
 
         print(f"Request {i + 1} Status Code: {response.status_code}, Response Time: {response_time:.2f} seconds")
         if test_type=='TSUNAMI' and  delay_interval_seconds:
-            await asyncio.sleep(delay_interval_seconds)
+            time.sleep(delay_interval_seconds)
         if sum(response_times)>=0.75:
             mean_response_time = statistics.mean(response_times)
             median_response_time = statistics.median(response_times)

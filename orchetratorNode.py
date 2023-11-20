@@ -77,7 +77,7 @@ async def consume_messages_resigter(type_consumer, numberOfDriver, typeOfTopic, 
         for message in type_consumer:
             if "EOFBREAK" in message.value.decode('utf-8'):
                 inde+=1
-                if inde >= noTests:
+                if inde >= (int(numberOfDriver)*noTests):
                     type_consumer.close()
                     return
             await process_metric_message(message)
