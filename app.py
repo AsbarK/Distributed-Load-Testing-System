@@ -1,15 +1,19 @@
+import os
 from flask import Flask, render_template, request
-import subprocess
-import time
 
 app = Flask(__name__)
+pwd = os.getcwd()
+print(pwd)
+def run_driver_node(driver_id):
+    command = f"python3 {pwd}/driverNode.py localhost:9092 localhost:9092"
+    os.system(f"osascript -e 'tell application \"Terminal\" to do script \"{command}\"'")
 
 @app.route('/')
 def index():
     return render_template('tesss.html')
 
 @app.route('/run-orchestration', methods=['POST'])
-def run_orchestration():
+def run_orchestration_route():
     num_drivers = int(request.form['num_drivers'])
     test_type = request.form['test_type']
     
@@ -22,18 +26,12 @@ def run_orchestration():
     print(num_drivers, num_messages)
 
     # Run orchestration node
-    # orchestration_command = "orchetratorNode.py {} {} {} {}".format(num_drivers, test_type, delay, num_messages)
-    orchestration_result = subprocess.run(["python3",'orchetratorNode.py',str(num_drivers),str(test_type),str(delay),str(num_messages)],  capture_output=True, text=True)
-    print("Orchestration Output:", orchestration_result.stdout)
-    print("Orchestration Error:", orchestration_result.stderr)
+    orchestration_command = f"python3 {pwd}/orchetratorNode.py {num_drivers} {test_type} {delay} {num_messages}"
+    os.system(f"osascript -e 'tell application \"Terminal\" to do script \"{orchestration_command}\"'")
 
     # Run driver nodes
     for i in range(num_drivers):
-        # driver_command = "driverNode.py localhost:9092 localhost:9092 {} {} {}".format(test_type, delay, num_messages)
-        driver_result = subprocess.run(["python3",'driverNode.py','localhost:9092','localhost:9092'],  capture_output=True, text=True)
-        print(f"Driver Node {i + 1} Output:", driver_result.stdout)
-        print(f"Driver Node {i + 1} Error:", driver_result.stderr)
-        time.sleep(2)
+        run_driver_node(i + 1)
 
     return "Orchestration and Drivers started successfully!"
 

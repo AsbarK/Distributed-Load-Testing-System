@@ -58,13 +58,11 @@ async def send_requests_with_delay(url, num_requests, delay_interval_seconds, te
 async def process_message(message):
     try:
         if message and message.value:
-            if message.value.decode('utf-8') == 'EOFBREAK':
-                consumer_Test_Conf.close()
             ms = json.loads(message.value.decode('utf-8'))
             print(ms['test_id'])
             await send_requests_with_delay('https://www.google.com', int(ms['message_count_per_driver']), int(ms['test_message_delay']), ms['test_id'],ms['test_type'])
             producer.flush()
-            producer.send('metrics',b'EOFBREAK')
+            # producer.send('metrics',b'EOFBREAK')
             return
         else:
             print("Received message with None value.")
