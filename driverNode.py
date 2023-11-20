@@ -92,6 +92,8 @@ async def consume_messages(consumer_Test_Conf):
             print('pout')
             await process_message(message)
             consumer_Test_Conf.close()
+            print('sending break')
+            producer.send('metrics',b'EOFBREAK')
             return
     except Exception as e:
         print(f"Error consuming messages: {e}")

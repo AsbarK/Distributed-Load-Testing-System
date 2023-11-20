@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
 pwd = os.getcwd()
@@ -12,6 +12,21 @@ def run_driver_node(driver_id):
 def index():
     return render_template('tesss.html')
 
+metric_result = {}  # Keep track of metric results globally
+
+@app.route('/update_metrics', methods=['POST'])
+def update_metrics():
+    global metric_result
+    data = request.json
+    metric_result = data['metric_result']
+    print(metric_result)
+    return jsonify({"status": "success"})
+
+@app.route('/metrics')
+def metrics():
+    global metric_result
+    return render_template('metrics.html', metric_result=metric_result)
+
 @app.route('/run-orchestration', methods=['POST'])
 def run_orchestration_route():
     num_drivers = int(request.form['num_drivers'])
@@ -22,8 +37,6 @@ def run_orchestration_route():
     delay = int(delay) if delay and delay.isdigit() else 0
     
     num_messages = int(request.form['num_messages'])
-
-    print(num_drivers, num_messages)
 
     # Run orchestration node
     orchestration_command = f"python3 {pwd}/orchetratorNode.py {num_drivers} {test_type} {delay} {num_messages}"

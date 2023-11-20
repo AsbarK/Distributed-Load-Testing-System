@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metric Results</title>
+</head>
+<body>
+    <h1>Metric Results</h1>
+    <table border="1">
+        <tr>
+            <th>Node ID</th>
+            <th>Test ID</th>
+            <th>Metrics</th>
+        </tr>
+        {% for node_id, tests in metric_result.items() %}
+            {% for test_id, metrics in tests.items() %}
+                <tr>
+                    <td>{{ node_id }}</td>
+                    <td>{{ test_id }}</td>
+                    <td>
+                        {% for metric_key, metric_value in metrics.items() %}
+                            {{ metric_key }}: {{ metric_value }}<br>
+                        {% endfor %}
+                    </td>
+                </tr>
+            {% endfor %}
+        {% endfor %}
+    </table>
+</body>
+</html>
