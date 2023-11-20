@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,7 +18,8 @@
             background-position: center;
             font-weight: 300;
             color: white;
-            margin: 0; /* Remove default margin */
+            margin: 0;
+            /* Remove default margin */
         }
 
         h2.logo {
@@ -30,41 +32,39 @@
             -webkit-text-fill-color: transparent;
             margin-bottom: 100px;
             margin-right: 100px;
-           
         }
 
-        
         table {
-        width: 100%;
-        margin-top: 0px;
-        border-spacing: 0;
-        border-collapse: collapse;
-    }
+            width: 100%;
+            margin-top: 0px;
+            border-spacing: 0;
+            border-collapse: collapse;
+        }
 
-    th, td {
-        padding: 12px;
-        text-align: left;
-    }
+        th,
+        td {
+            padding: 12px;
+            text-align: left;
+        }
 
-    th {
-        background-color: grey;
-        color:white;
-        font-weight: bold;
-    }
+        th {
+            background-color: grey;
+            color: white;
+            font-weight: bold;
+        }
 
-    td {
-        background-color:whitesmoke;
-        color:black;
-    }
+        td {
+            background-color: whitesmoke;
+            color: black;
+        }
 
-    tr:nth-child(even) {
-        background-color: whitesmoke;
-    }
+        tr:nth-child(even) {
+            background-color: whitesmoke;
+        }
 
-    tr:hover {
-        background-color: whitesmoke;
-    }
-
+        tr:hover {
+            background-color: whitesmoke;
+        }
     </style>
 </head>
 
@@ -77,6 +77,7 @@
                 <th>Node ID</th>
                 <th>Test ID</th>
                 <th>Metrics</th>
+                <th>Heartbeat TimeStamp</th>
             </tr>
         </thead>
         <tbody>
@@ -90,6 +91,7 @@
                                 {{ metric_key }}: {{ metric_value }}<br>
                             {% endfor %}
                         </td>
+                        <td>{{ heartBeat.get(node_id, {}).get('timestamp', 'N/A') }}</td>
                     </tr>
                 {% endfor %}
             {% endfor %}

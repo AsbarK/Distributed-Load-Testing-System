@@ -23,6 +23,7 @@ def uniqueId():
 
 consumer_Register = KafkaConsumer('register', group_id='Register')
 consumer_metrics = KafkaConsumer('metrics', group_id='metrics')
+consumer_heartbeat = KafkaConsumer('heartbeat', group_id='heartbeat')
 producer = KafkaProducer(bootstrap_servers=['localhost:9092'])
 rejisterd_DriverNodes = {}
 metric_result = {}
@@ -102,6 +103,14 @@ def run_main():
     asyncio.set_event_loop(loop)
     loop.run_until_complete(main())
 
+def consumer_heartBeat():
+    for message in consumer_heartbeat:
+        msg = message.value.decode('utf-8')
+        if msg:
+            msg_val = json.loads(msg)
+            flask_app_url = 'http://127.0.0.1:5000/heartbeat'
+            response = requests.post(flask_app_url, json={'heartbeat': msg_val})
+
 async def main():
     numberOfTests = 0
     # numberOfDriverNodes = input('Enter the number of Drivers:')
@@ -123,10 +132,13 @@ if __name__ == '__main__':
 
     thread1 = threading.Thread(target=run_asyncio)
     thread2 = threading.Thread(target=run_main)
+    thread3 = threading.Thread(target=consumer_heartBeat)
 
     thread1.start()
     thread2.start()
+    thread3.start()
     thread1.join()
     thread2.join()
+    thread3.join()
 
     print(rejisterd_DriverNodes, metric_result)

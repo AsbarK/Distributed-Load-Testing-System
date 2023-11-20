@@ -15,7 +15,8 @@ def index():
     return render_template('tesss.html')
 
 metric_result = {}       
-prev_metric_result = {}  
+prev_metric_result = {}
+heartBeat = {}
 
 @app.route('/update_metrics', methods=['POST'])
 def update_metrics():
@@ -34,24 +35,27 @@ def update_metrics():
     
     print("Updated metric results:", metric_result)
     return jsonify({"status": "success"})
-
+@app.route('/heartbeat', methods=['POST'])
+def heartbeat():
+    global heartBeat
+    data = request.json
+    heartBeat[data['heartbeat']['node_id']] = data['heartbeat']
+    return jsonify({"status": "success"})
 
 @app.route('/metrics')
 def metrics():
-    global metric_result
-    return render_template('metrics.html', metric_result=metric_result)
+    global metric_result,heartBeat
+    return render_template('metrics.html', metric_result=metric_result,heartBeat=heartBeat)
 @app.route('/run-orchestration', methods=['POST'])
 def run_orchestration_route():
     num_drivers = int(request.form['num_drivers'])
     test_type = request.form['test_type']
     
-    # Check if 'delay' is empty or not provided
     delay = request.form['delay']
     delay = int(delay) if delay and delay.isdigit() else 0
     
     num_messages = int(request.form['num_messages'])
 
-    # Run orchestration node
     
 
     orchestration_command = f"python3 {pwd}/orchetratorNode.py {num_drivers} {test_type} {delay} {num_messages}"
