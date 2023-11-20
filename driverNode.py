@@ -8,6 +8,7 @@ import json
 import requests
 import time
 import statistics
+import threading
 
 kafkaIp, orchsIp = sys.argv[1:]
 isTrigger = False
@@ -34,7 +35,7 @@ async def send_requests_with_delay(url, num_requests, delay_interval_seconds, te
 
         print(f"Request {i + 1} Status Code: {response.status_code}, Response Time: {response_time:.2f} seconds")
         if test_type=='TSUNAMI' and  delay_interval_seconds:
-            await asyncio.sleep(delay_interval_seconds)
+            time.sleep(delay_interval_seconds)
         if sum(response_times)>=0.75:
             mean_response_time = statistics.mean(response_times)
             median_response_time = statistics.median(response_times)
@@ -98,6 +99,21 @@ async def consume_messages(consumer_Test_Conf):
     except Exception as e:
         print(f"Error consuming messages: {e}")
 
+async def hearBeat():
+    while True:
+        await asyncio.sleep(5)
+        producer.send('heartbeat',json.dumps({"node_id": unique_hash, "heartbeat": "YES","timestamp": datetime.now().strftime('%Y%m%d%H%M%S%f')}).encode('utf-8'))
+        print('heartbeat')
+
+def runMain():
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(main())
+
+def runHeartBeat():
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(hearBeat())
 
 async def main():
     print(unique_hash)
@@ -110,5 +126,9 @@ if __name__ == '__main__':
     producer = KafkaProducer(bootstrap_servers=[kafkaIp])
     consumer_Test_Conf = KafkaConsumer('test_config', group_id=f'{unique_hash}test', bootstrap_servers=[kafkaIp])
     consumer_trigger = KafkaConsumer('trigger', group_id=f'{unique_hash}trigger', bootstrap_servers=[kafkaIp])
-
-    asyncio.run(main())
+    thread1 = threading.Thread(target=runMain)
+    thread2 = threading.Thread(target=runHeartBeat)
+    thread1.start()
+    thread2.start()
+    thread1.join()
+    thread2.join()

@@ -8,6 +8,7 @@ from datetime import datetime
 import json
 import time
 import requests
+import threading
 
 num_drivers, test_type, delay, num_messages = sys.argv[1:]
 
@@ -22,6 +23,7 @@ def uniqueId():
 
 consumer_Register = KafkaConsumer('register', group_id='Register')
 consumer_metrics = KafkaConsumer('metrics', group_id='metrics')
+consumer_heartbeat = KafkaConsumer('heartbeat', group_id='heartbeat')
 producer = KafkaProducer(bootstrap_servers=['localhost:9092'])
 rejisterd_DriverNodes = {}
 metric_result = {}
@@ -54,9 +56,6 @@ async def process_metric_message(message):
                 temp_metric_result[node_id] = {}
             temp_metric_result[node_id][test_id] = metrics
             print({'node_id': node_id, 'metrics': metrics, 'test_id': test_id})
-
-        else:
-            print("Received empty or non-JSON message.")
     except json.JSONDecodeError as e:
         print(f"Error decoding JSON: {e}")
     except Exception as e:
@@ -77,7 +76,8 @@ async def consume_messages_resigter(type_consumer, numberOfDriver, typeOfTopic, 
         for message in type_consumer:
             if "EOFBREAK" in message.value.decode('utf-8'):
                 inde+=1
-                if inde >= noTests:
+                if inde >= (int(numberOfDriver)*noTests):
+                    print('break')
                     type_consumer.close()
                     return
             await process_metric_message(message)
@@ -93,6 +93,23 @@ async def send_metrics_to_flask():
             print("Temp metric results sent to Flask app")
             temp_metric_result.clear()
 
+def run_asyncio():
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(send_metrics_to_flask())
+
+def run_main():
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(main())
+
+def consumer_heartBeat():
+    for message in consumer_heartbeat:
+        msg = message.value.decode('utf-8')
+        if msg:
+            msg_val = json.loads(msg)
+            flask_app_url = 'http://127.0.0.1:5000/heartbeat'
+            response = requests.post(flask_app_url, json={'heartbeat': msg_val})
 
 async def main():
     numberOfTests = 0
@@ -106,16 +123,22 @@ async def main():
         # print('in trigger')
         producer.send('trigger', json.dumps({"test_id": test_id, "trigger": "YES"}).encode('utf-8'))
         producer.send('trigger', b'EOFBREAK')
-        # time.sleep(2)
-        await asyncio.gather(
-            consume_messages_resigter(consumer_metrics, num_drivers, 'metrics', numberOfTests),
-            send_metrics_to_flask()
-        )
+        await consume_messages_resigter(consumer_metrics, num_drivers, 'metrics', numberOfTests),
     except Exception as e:
         print(f"Error in main: {e}")
 
 if __name__ == '__main__':
     time.sleep(2 * int(num_drivers))
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
+
+    thread1 = threading.Thread(target=run_asyncio)
+    thread2 = threading.Thread(target=run_main)
+    thread3 = threading.Thread(target=consumer_heartBeat)
+
+    thread1.start()
+    thread2.start()
+    thread3.start()
+    thread1.join()
+    thread2.join()
+    thread3.join()
+
     print(rejisterd_DriverNodes, metric_result)
