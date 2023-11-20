@@ -72,14 +72,21 @@ async def consume_messages_resigter(type_consumer,numberOfDriver,typeOfTopic,noT
 async def main():
     numberOfTests = 0
     numberOfDriverNodes = input('Enter the number of Drivers:')
+    time.sleep(2*int(numberOfDriverNodes))
     await consume_messages_resigter(consumer_Register, numberOfDriverNodes, 'register',numberOfTests)
 
-    cmdInput = input("Enter a command (1 to send a message, exit to quit): ")
+    cmdInput = input("Enter a command (1 to send a TSUNAMi, 2 to send AVALANCHI): ")
+    message_count = input("Enter the number of messages:")
     test_id = uniqueId()
     if cmdInput == "1":
-        producer.send('test_config', json.dumps({"test_id":test_id,"test_type": "AVALANCHE","test_message_delay": "0", "message_count_per_driver": "100"}).encode('utf-8'))
+        delayInput = input("Enter the delay:")
+        producer.send('test_config', json.dumps({"test_id":test_id,"test_type": "TSUNAMI","test_message_delay": int(delayInput), "message_count_per_driver": int(message_count)}).encode('utf-8'))
         numberOfTests+=1
-    if cmdInput == "1":
+    if cmdInput == "2":
+        producer.send('test_config', json.dumps({"test_id":test_id,"test_type": "AVALANCHE","test_message_delay": "0", "message_count_per_driver": int(message_count)}).encode('utf-8'))
+        numberOfTests+=1
+    cmdInput = input("Enter a command 3 to send trigger as YES: ")
+    if cmdInput == "3":
         print('in trigger')
         producer.send('trigger',json.dumps({"test_id":test_id,"trigger": "YES"}).encode('utf-8'))
         producer.send('trigger',b'EOFBREAK')
