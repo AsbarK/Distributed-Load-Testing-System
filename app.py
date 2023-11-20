@@ -14,15 +14,27 @@ def run_driver_node(driver_id):
 def index():
     return render_template('tesss.html')
 
-metric_result = {}  # Keep track of metric results globally
+metric_result = {}       
+prev_metric_result = {}  
 
 @app.route('/update_metrics', methods=['POST'])
 def update_metrics():
-    global metric_result
+    global metric_result, prev_metric_result
     data = request.json
-    metric_result = data['metric_result']
-    print(metric_result)
+    current_metrics = data['metric_result']
+    prev_metric_result = metric_result.copy()
+
+    for node_id, metrics_per_test in current_metrics.items():
+        if node_id not in metric_result:
+            metric_result[node_id] = {}
+        
+        for test_id, metrics in metrics_per_test.items():
+            if test_id not in metric_result[node_id] or metric_result[node_id][test_id] != metrics:
+                metric_result[node_id][test_id] = metrics
+    
+    print("Updated metric results:", metric_result)
     return jsonify({"status": "success"})
+
 
 @app.route('/metrics')
 def metrics():
