@@ -23,20 +23,23 @@ def uniqueHash():
 unique_hash = uniqueHash()
 
 async def send_requests_with_delay(url, num_requests, delay_interval_seconds, test_id,test_type):
+    start_time = time.time()
     response_times = []
 
     for i in range(num_requests):
-        start_time = time.time()
-        response = requests.get(url)
-        end_time = time.time()
+        current_time = time.time()
+        elapsed_time = current_time - start_time
 
-        response_time = end_time - start_time
+        response = requests.get(url)
+        response_time = time.time() - current_time
         response_times.append(response_time)
 
         print(f"Request {i + 1} Status Code: {response.status_code}, Response Time: {response_time:.2f} seconds")
-        if test_type=='TSUNAMI' and  delay_interval_seconds:
+
+        if test_type == 'TSUNAMI' and delay_interval_seconds:
             time.sleep(delay_interval_seconds)
-        if sum(response_times)>=0.75:
+
+        if elapsed_time >= 1.0:
             mean_response_time = statistics.mean(response_times)
             median_response_time = statistics.median(response_times)
             min_response_time = min(response_times)
@@ -53,6 +56,9 @@ async def send_requests_with_delay(url, num_requests, delay_interval_seconds, te
                 "test_id": test_id,
                 "report_id": uniqueHash()
             }).encode('utf-8'))
+
+            # Reset the timer and response times
+            start_time = time.time()
             response_times = []
     
 
@@ -61,7 +67,7 @@ async def process_message(message):
         if message and message.value:
             ms = json.loads(message.value.decode('utf-8'))
             print(ms['test_id'])
-            await send_requests_with_delay('https://www.google.com', int(ms['message_count_per_driver']), int(ms['test_message_delay']), ms['test_id'],ms['test_type'])
+            await send_requests_with_delay('http://localhost:8080/ping', int(ms['message_count_per_driver']), int(ms['test_message_delay']), ms['test_id'],ms['test_type'])
             producer.flush()
             # producer.send('metrics',b'EOFBREAK')
             return
