@@ -36,8 +36,10 @@ The target server provides an endpoint to test and a metrics endpoint to track t
 
 1. Clone the repository.
 2. Install the required dependencies.
-3. Configure Kafka IP Address and Orchestrator node IP Address as command-line arguments.
-4. Run Orchestrator node and Driver nodes separately.
+3. `pip install kafka-python flask`
+4. Run kafka in the backroud.
+5. Once Kafka has started run `python app.py`.
+6. go to `http://localhost:5000/`, Enjoy the Testing.
 
 ## You can find the architecture design for the above project.
 https://app.eraser.io/workspace/w1WtgR9IKSSTMuHdOEMF?origin=share
